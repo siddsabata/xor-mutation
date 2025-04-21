@@ -1,115 +1,60 @@
-# 🧬 Final Project Plan: Evolving Mutation Rates in a Simple Neural Network on XOR
+# 🧠 XOR Evolution Simulation
 
-## 🎯 Research Goal
-Investigate the **reduction principle** in evolutionary theory, which predicts that **mutation rates should evolve toward zero** under stable conditions. We aim to test this using a **simple fixed-topology neural network** that learns the **XOR function**, and observe how **mutation rates evolve over time** under **three different selection strategies**.
+This project simulates the evolution of simple neural networks learning the XOR function. It specifically investigates how the strategy for inheriting mutation rates affects the evolutionary process.
 
----
+## Purpose
 
-## 🧠 Background
-### What is the Reduction Principle?
-The reduction principle is a key theoretical result in evolutionary biology. It suggests that when selective pressure is constant and stabilizing (i.e., fitness peaks are fixed and stable), evolution should favor organisms that lower their mutation rates over time. This happens because once a good solution is found, mutations are more likely to degrade it than improve it.
+The main goal is to compare two scenarios:
+1.  **Fixed Mutation Rate:** Each network inherits its mutation strength (`sigma`) directly from its parent without change.
+2.  **Dynamic Mutation Rate:** The mutation strength (`sigma`) itself is also subject to mutation and can evolve over generations.
 
-### Why XOR?
-The XOR function is a minimal non-linearly separable classification task, requiring a small neural network with at least one hidden layer. It is computationally simple but structurally interesting enough to test whether a population can evolve toward an optimal set of weights and begin suppressing mutations.
+We simulate this to see if mutation rates tend to decrease over time when allowed to evolve, as predicted by some theories.
 
----
+## How it Works
 
-## 🧪 Experimental Setup
+-   **Population:** We maintain a population of individuals, where each individual represents a small neural network (2 input, 2 hidden, 1 output neurons).
+-   **Fitness:** Each network's fitness is determined by how well it solves the XOR problem (calculated as 1 - Mean Squared Error).
+-   **Selection:** Individuals with higher fitness have a higher chance of being selected as parents for the next generation (using Roulette Wheel Selection).
+-   **Reproduction & Mutation:** Selected parents produce offspring. Offspring inherit the parent's network weights with added random noise (mutation). The strength of this noise is determined by the individual's `sigma`. In the dynamic strategy, the `sigma` value itself is also mutated.
+-   **Generations:** This cycle repeats for many generations (e.g., 1000).
 
-### 1. Neural Network Structure
-- Fixed architecture:
-  - Input layer: 2 neurons
-  - Hidden layer: 2 neurons (e.g., with sigmoid/tanh activation)
-  - Output layer: 1 neuron (sigmoid)
-- Total number of weights and biases: ~9
+## Experiments Conducted
 
-### 2. Individual Representation
-Each individual in the population will have:
-- `weights`: A vector of real-valued weights and biases.
-- `sigma`: A real-valued scalar representing the **mutation rate**.
+The simulation runs the following experiments:
+1.  **Experiment 1:** Fixed Sigma strategy with Population Size N=1000.
+2.  **Experiment 2:** Dynamic Sigma strategy with Population Size N=1000.
+3.  **Experiment 3:** Fixed Sigma strategy, testing multiple population sizes (scaling analysis).
+4.  **Experiment 4:** Dynamic Sigma strategy, testing multiple population sizes (scaling analysis).
 
-### 3. Initial Conditions
-- Randomly initialize:
-  - Weights in a small range (e.g., [-1, 1])
-  - Mutation rate `sigma` in a range [0.01, 0.5]
-- Population size: 50
-- Generations: 50 to 100
+## Code Structure
 
-### 4. Mutation Process
-- Weights are mutated using:
-  ```
-  w_new = w_old + N(0, sigma^2)
-  ```
-- Mutation rate evolves too:
-  ```
-  sigma_new = |sigma_old + N(0, sigma_meta^2)|
-  ```
-  - `sigma_meta` is a fixed hyperparameter (e.g., 0.01)
+-   `main.py`: Main script to run the simulation. Orchestrates experiments and plotting.
+-   `evolution.py`: Contains the core functions of the evolutionary algorithm (initialization, selection, reproduction, evolution loop).
+-   `experiments.py`: Defines functions to run each specific experiment.
+-   `network.py`: Defines the neural network structure and the `forward_pass` function.
+-   `utils.py`: Helper functions (e.g., `calculate_fitness`, `save_results_to_csv` - *Note: CSV saving is currently replaced by pickle saving*).
+-   `plotting.py`: Functions to generate plots from the simulation results.
+-   `requirements.txt`: Lists Python dependencies.
+-   `data/`: Directory where simulation results (`.pkl` files) are saved/loaded.
+-   `plots/`: Directory where output plots (`.png`) are saved.
 
-### 5. Fitness Evaluation
-- For each individual:
-  - Compute accuracy or mean squared error on all 4 XOR inputs:
+## How to Run
+
+1.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
     ```
-    XOR Truth Table:
-    (0, 0) -> 0
-    (0, 1) -> 1
-    (1, 0) -> 1
-    (1, 1) -> 0
+2.  **Run Simulation:**
+    ```bash
+    python main.py
     ```
-- Normalize fitness scores to be usable by selection functions.
 
----
+3.  **Results Persistence:**
+    -   The script saves the complete results of each experiment (or set of scaling experiments) to `.pkl` files in the `data/` directory (e.g., `data/exp1_results.pkl`, `data/exp3_scaling_results.pkl`).
+    -   On subsequent runs, the script will **load** these files if they exist, skipping the potentially long simulation runs. This allows for quick regeneration of plots.
+    -   To **force a rerun** of the experiments, delete the corresponding `.pkl` files from the `data/` directory.
 
-## 🔄 Selection Strategies to Compare
-We will compare how mutation rates evolve under three different selection rules:
+## Output
 
-### 1. **Roulette-Wheel Selection**
-- Probability of reproduction is proportional to fitness:
-  ```
-  p_i = fitness_i / sum(fitness)
-  ```
-- Stochastic: Individuals with higher fitness are more likely to reproduce, but not guaranteed.
-
-### 2. **Tournament Selection**
-- Randomly select `k` individuals (e.g., 3).
-- The fittest among them is selected to reproduce.
-- Adds stochasticity with stronger selection pressure.
-
-### 3. **Deterministic Selection**
-- Always select the top `n` individuals with the highest fitness scores to reproduce.
-- Fully deterministic: introduces the highest selection pressure.
-
----
-
-## 📊 Data to Collect
-For each selection rule, we will track the following over generations:
-- **Best fitness** and **average fitness**
-- **Best mutation rate** and **average mutation rate**
-- (Optional) Population diversity (e.g., average pairwise distance between weight vectors)
-
-All results will be plotted for comparison:
-- Fitness over time
-- Mutation rate over time
-- Possibly heatmaps or scatterplots of mutation rate vs fitness
-
----
-
-## 📈 Expected Outcomes
-- If the **reduction principle holds**, we expect the **average mutation rate to decrease over time**, especially once the population starts approaching high accuracy on XOR.
-- The **rate and extent of reduction** may vary by selection scheme:
-  - Deterministic may drive mutation rates down fastest.
-  - Tournament may preserve some diversity.
-  - Roulette-wheel may retain higher mutation rates longer.
-
----
-
-## 🧰 Tools
-- Python + NumPy (or PyTorch for ease of NN forward passes)
-- Matplotlib for plotting
-- Seeded randomness for reproducibility
-
----
-
-## ✅ Summary
-This project combines evolutionary theory with a computational model to test a classic prediction — that **mutation rates evolve toward zero under stabilizing selection**. By evolving a simple neural network on a toy XOR task and comparing different selection rules, we can explore how evolutionary dynamics behave in a controlled, analyzable setting.
-
+-   **Data:** Python object files (`.pkl`) containing the full results history for each experiment are saved in the `data/` directory.
+-   **Plots:** Several plots comparing fitness and sigma values (over generations and against population size) are saved as `.png` files in the `plots/` directory. 
